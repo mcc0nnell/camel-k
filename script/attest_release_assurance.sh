@@ -109,3 +109,14 @@ while IFS= read -r image; do
             "$sbom_source" >/dev/null
     done < <(jq -c '.sboms[]?' <<<"$image")
 done < <(jq -c '.images[]' "$receipt")
+
+# Re-run the entire release contract from the consumer side. Strict mode requires
+# every local release asset, recomputes hashes, re-reads embedded Go VCS metadata,
+# and requires the verified OCI predicates to match the exact local JSON files.
+ASSURANCE_REQUIRE_LOCAL_ASSETS=true \
+COSIGN_CERTIFICATE_IDENTITY="$identity" \
+COSIGN_CERTIFICATE_OIDC_ISSUER="$issuer" \
+bash "$(dirname "$0")/verify_release_assurance.sh" \
+    "$receipt" \
+    "$bundle" \
+    release-assurance.verdict.json
